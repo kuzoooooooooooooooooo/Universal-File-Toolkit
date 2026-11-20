@@ -16,7 +16,7 @@ const wself = self as unknown as {
   postMessage: (message: unknown, transfer?: Transferable[]) => void;
 };
 
-const post = (id: number, msg: unknown, transfer?: Transferable[]) =>
+const post = (id: number, msg: Record<string, unknown>, transfer?: Transferable[]) =>
   wself.postMessage({ id, ...msg }, transfer);
 
 const toBuffer = (u8: Uint8Array): ArrayBuffer => u8.slice().buffer as ArrayBuffer;

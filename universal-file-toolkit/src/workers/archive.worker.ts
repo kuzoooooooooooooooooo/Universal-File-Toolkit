@@ -13,7 +13,6 @@ interface Req {
 interface Entry {
   name: string;
   size: number;
-  compressedSize: number;
 }
 
 const wself = self as unknown as {
@@ -21,7 +20,7 @@ const wself = self as unknown as {
   postMessage: (message: unknown, transfer?: Transferable[]) => void;
 };
 
-const post = (id: number, msg: unknown, transfer?: Transferable[]) =>
+const post = (id: number, msg: Record<string, unknown>, transfer?: Transferable[]) =>
   wself.postMessage({ id, ...msg }, transfer);
 
 const toBuffer = (u8: Uint8Array): ArrayBuffer => u8.slice().buffer as ArrayBuffer;
@@ -34,20 +33,13 @@ const mimeFor = (name: string): string => {
 function listEntries(data: Uint8Array): Entry[] {
   const entries: Entry[] = [];
   const unzip = new Unzip((file) => {
-    entries.push({
-      name: file.name,
-      size: file.size,
-      compressedSize: file.compressedSize,
-    });
+    entries.push({ name: file.name, size: file.size ?? 0 });
   });
   unzip.push(data, true);
   return entries;
 }
 
-function extractSelected(
-  data: Uint8Array,
-  selected: string[]
-): Map<string, Uint8Array> {
+function extractSelected(data: Uint8Array, selected: string[]): Map<string, Uint8Array> {
   const out = new Map<string, Uint8Array>();
   const chunks = new Map<string, Uint8Array[]>();
   const unzip = new Unzip((file) => {
@@ -78,11 +70,9 @@ wself.onmessage = (e: MessageEvent) => {
   const req = e.data as Req;
   try {
     if (req.op === "list") {
-      const entries = listEntries(new Uint8Array(req.buffers[0]));
-      post(req.id, { type: "entries", entries });
+      post(req.id, { type: "entries", entries: listEntries(new Uint8Array(req.buffers[0])) });
       return;
     }
-
     if (req.op === "zip") {
       post(req.id, { type: "progress", percent: 30, stage: "Compressing (large files may take a while)" });
       const files: Record<string, Uint8Array> = {};
@@ -96,7 +86,6 @@ wself.onmessage = (e: MessageEvent) => {
       post(req.id, { type: "done", buffer: buf, mime: "application/zip", filename }, [buf]);
       return;
     }
-
     if (req.op === "gz") {
       post(req.id, { type: "progress", percent: 30, stage: "Compressing (large files may take a while)" });
       const gz = gzipSync(new Uint8Array(req.buffers[0]), { level: 6 });
@@ -105,7 +94,6 @@ wself.onmessage = (e: MessageEvent) => {
       post(req.id, { type: "done", buffer: buf, mime: "application/gzip", filename }, [buf]);
       return;
     }
-
     if (req.op === "extract") {
       post(req.id, { type: "progress", percent: 30, stage: "Extracting" });
       const selected = req.selected ?? [];
@@ -125,13 +113,10 @@ wself.onmessage = (e: MessageEvent) => {
         const zip = zipSync(files, { level: 0 });
         const buf = toBuffer(zip);
         const filename = `${sanitizeFilename(baseName(req.names[0]))}-extracted.zip`;
-        post(req.id, { type: "done", buffer: buf, mime: "application/zip", filename: filename }, [buf]);
+        post(req.id, { type: "done", buffer: buf, mime: "application/zip", filename }, [buf]);
       }
     }
   } catch (err) {
-    post(req.id, {
-      type: "error",
-      error: err instanceof Error ? err.message : String(err),
-    });
+    post(req.id, { type: "error", error: err instanceof Error ? err.message : String(err) });
   }
 };

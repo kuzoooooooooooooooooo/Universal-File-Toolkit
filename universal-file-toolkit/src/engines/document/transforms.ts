@@ -135,7 +135,7 @@ export const BLOB_TRANSFORMS: Record<
     const bytes = csvToXlsx(await f.text());
     const base = f.name.replace(/\.[^.]+$/, "");
     return {
-      blob: new Blob([bytes], { type: EXT_XLSX }),
+      blob: new Blob([bytes.slice().buffer as ArrayBuffer], { type: EXT_XLSX }),
       filename: `${base}.xlsx`,
     };
   },

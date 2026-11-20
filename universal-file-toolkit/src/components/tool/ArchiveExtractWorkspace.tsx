@@ -13,7 +13,6 @@ import { ResultPanel, type ResultState } from "./ResultPanel";
 interface Entry {
   name: string;
   size: number;
-  compressedSize: number;
 }
 
 interface WorkerMsg {

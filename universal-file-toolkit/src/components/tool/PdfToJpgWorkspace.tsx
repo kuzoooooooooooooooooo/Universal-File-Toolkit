@@ -51,9 +51,10 @@ export function PdfToJpgWorkspace({ tool }: { tool: ToolDefinition }) {
       const pdfjs = await import("pdfjs-dist");
       pdfjs.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
       const data = await file.arrayBuffer();
-      const doc = await pdfjs.getDocument({ data }).promise;
+      const task = pdfjs.getDocument({ data });
+      const doc = await task.promise;
       const total = doc.numPages;
-      const pages: Record<string, Uint8Array> = {};
+      const pages: Record<string, Uint8Array<ArrayBuffer>> = {};
 
       for (let i = 1; i <= total; i++) {
         if (cancelRef.current) break;
@@ -68,7 +69,7 @@ export function PdfToJpgWorkspace({ tool }: { tool: ToolDefinition }) {
         canvas.height = viewport.height;
         const ctx = canvas.getContext("2d");
         if (!ctx) throw new Error("Canvas unavailable");
-        await page.render({ canvasContext: ctx, viewport }).promise;
+        await page.render({ canvas, canvasContext: ctx, viewport }).promise;
         const blob = await new Promise<Blob | null>((res) =>
           canvas.toBlob(res, "image/jpeg", quality)
         );
@@ -78,7 +79,7 @@ export function PdfToJpgWorkspace({ tool }: { tool: ToolDefinition }) {
         );
         page.cleanup();
       }
-      await doc.destroy();
+      await task.destroy();
 
       if (cancelRef.current) {
         setStatus("idle");
@@ -90,11 +91,11 @@ export function PdfToJpgWorkspace({ tool }: { tool: ToolDefinition }) {
       let blob: Blob;
       let filename: string;
       if (names.length === 1) {
-        blob = new Blob([pages[names[0]]], { type: "image/jpeg" });
+        blob = new Blob([pages[names[0]].slice().buffer as ArrayBuffer], { type: "image/jpeg" });
         filename = `${sanitizeFilename(baseName(file.name))}.jpg`;
       } else {
         const zip = zipSync(pages, { level: 0 });
-        blob = new Blob([zip], { type: "application/zip" });
+        blob = new Blob([zip.slice().buffer as ArrayBuffer], { type: "application/zip" });
         filename = `${sanitizeFilename(baseName(file.name))}-pages.zip`;
       }
       const url = URL.createObjectURL(blob);
