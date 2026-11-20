@@ -1,4 +1,4 @@
-import { FFmpeg } from "@ffmpeg/ffmpeg";
+import { FFmpeg } from "@/vendor/ffmpeg/index.js";
 import { toBlobURL } from "@ffmpeg/util";
 
 let instance: FFmpeg | null = null;
