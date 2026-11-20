@@ -11,6 +11,9 @@ export const EXT_MIME: Record<string, string> = {
   mp3: "audio/mpeg",
   wav: "audio/wav",
   mp4: "video/mp4",
+  ogg: "audio/ogg",
+  flac: "audio/flac",
+  webm: "video/webm",
   json: "application/json",
   txt: "text/plain",
   csv: "text/csv",
@@ -39,6 +42,9 @@ const SIGNATURES: Signature[] = [
   { ext: "wav", check: (b) => eq(b, 0, [0x52, 0x49, 0x46, 0x46]) && eq(b, 8, [0x57, 0x41, 0x56, 0x45]) },
   { ext: "mp3", check: (b) => eq(b, 0, [0x49, 0x44, 0x33]) || (b[0] === 0xff && (b[1] & 0xe0) === 0xe0) },
   { ext: "mp4", check: (b) => eq(b, 4, [0x66, 0x74, 0x79, 0x70]) },
+  { ext: "ogg", check: (b) => eq(b, 0, [0x4f, 0x67, 0x67, 0x53]) },
+  { ext: "flac", check: (b) => eq(b, 0, [0x66, 0x4c, 0x61, 0x43]) },
+  { ext: "webm", check: (b) => eq(b, 0, [0x1a, 0x45, 0xdf, 0xa3]) },
 ];
 
 export interface DetectedFormat {

@@ -4,6 +4,8 @@ import { pdfTools } from "./tools/pdf-tools";
 import { archiveTools } from "./tools/archive-tools";
 import { documentTools } from "./tools/document-tools";
 import { devtoolsTools } from "./tools/devtools-tools";
+import { audioTools } from "./tools/audio-tools";
+import { videoTools } from "./tools/video-tools";
 
 const allTools: ToolDefinition[] = [
   ...imageTools,
@@ -11,6 +13,8 @@ const allTools: ToolDefinition[] = [
   ...archiveTools,
   ...documentTools,
   ...devtoolsTools,
+  ...audioTools,
+  ...videoTools,
 ];
 
 export function getAllTools(): ToolDefinition[] {

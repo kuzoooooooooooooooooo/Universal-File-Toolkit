@@ -10,6 +10,7 @@ import { HashWorkspace } from "@/components/tool/HashWorkspace";
 import { UuidWorkspace } from "@/components/tool/UuidWorkspace";
 import { FileToTextWorkspace } from "@/components/tool/FileToTextWorkspace";
 import { FileToBlobWorkspace } from "@/components/tool/FileToBlobWorkspace";
+import { MediaWorkspace } from "@/components/tool/MediaWorkspace";
 
 export function generateStaticParams() {
   return getSupportedTools().map((tool) => ({ slug: tool.id }));
@@ -44,5 +45,6 @@ export default async function ToolPage({
   if (ui === "uuid") return <UuidWorkspace tool={tool} />;
   if (ui === "file-to-text") return <FileToTextWorkspace tool={tool} />;
   if (ui === "file-to-blob") return <FileToBlobWorkspace tool={tool} />;
+  if (ui === "media") return <MediaWorkspace tool={tool} />;
   return <ToolWorkspace tool={tool} />;
 }

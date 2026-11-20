@@ -16,7 +16,8 @@ export type ToolUI =
   | "hash"
   | "uuid"
   | "file-to-text"
-  | "file-to-blob";
+  | "file-to-blob"
+  | "media";
 
 export interface ToolDefinition {
   id: string;
