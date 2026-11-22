@@ -7,7 +7,7 @@ import type { ToolDefinition } from "@/types/tool";
 import { SETTINGS } from "@/config/tool-settings";
 import { detectFormat, EXT_MIME } from "@/lib/file-detection/magic-bytes";
 import { baseName, formatBytes, sanitizeFilename } from "@/lib/utils/file-helpers";
-import { getFFmpeg, terminateFFmpeg } from "@/engines/media/ffmpeg-client";
+import { getFFmpeg, terminateFFmpeg, getEngineState, subscribeEngine } from "@/engines/media/ffmpeg-client";
 import { buildArgs, outputExt } from "@/engines/media/args";
 import { FileDropZone } from "./FileDropZone";
 import { ProcessingProgress } from "./ProcessingProgress";
@@ -26,6 +26,9 @@ export function MediaWorkspace({ tool }: { tool: ToolDefinition }) {
   );
   const urlRef = useRef<string | null>(null);
   const logsRef = useRef<string[]>([]);
+  const [engine, setEngine] = useState(getEngineState());
+  useEffect(() => subscribeEngine(setEngine), []);
+  useEffect(() => { const t = setTimeout(() => { void getFFmpeg().catch(() => {}); }, 50); return () => clearTimeout(t); }, []);
 
   useEffect(() => () => { if (urlRef.current) URL.revokeObjectURL(urlRef.current); }, []);
 
@@ -102,7 +105,7 @@ export function MediaWorkspace({ tool }: { tool: ToolDefinition }) {
     <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6">
       <h1 className="text-3xl font-bold text-foreground">{tool.name}</h1>
       <p className="mt-2 text-sm text-muted-foreground">{tool.description}</p>
-      <p className="mt-1 text-xs text-muted-foreground">FFmpeg.wasm runs on your device · engine cached after first load</p>
+      <p className="mt-1 text-xs text-muted-foreground">FFmpeg.wasm on your device · {engine.phase === "ready" ? "engine ready" : engine.phase === "downloading" ? "downloading engine in background" : "engine loads on first use"}</p>
       <div className="mt-8 space-y-6">
         {!file && (
           <FileDropZone accept={tool.inputFormats.map((e) => `.${e}`).join(",")} hint={`Supported: ${tool.inputFormats.join(", ")}`} onFile={(f) => void acceptFile(f)} />
@@ -135,7 +138,11 @@ export function MediaWorkspace({ tool }: { tool: ToolDefinition }) {
           </div>
         )}
         {(status === "loading" || status === "processing") && (
-          <ProcessingProgress percent={progress.percent} stage={progress.stage} onCancel={cancel} />
+          <ProcessingProgress
+            percent={status === "loading" ? (engine.total > 0 ? Math.round((engine.received / engine.total) * 100) : 2) : progress.percent}
+            stage={status === "loading" ? (engine.phase === "downloading" ? `Downloading engine ${(engine.received / 1048576).toFixed(1)}/${(engine.total / 1048576).toFixed(1)} MB` : engine.phase === "initializing" ? "Initializing engine" : "Loading engine") : progress.stage}
+            onCancel={cancel}
+          />
         )}
         {status === "done" && result && <ResultPanel result={result} onReset={reset} />}
         {error && (

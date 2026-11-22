@@ -14,6 +14,12 @@ const nextConfig: NextConfig = {
     return [
       { source: "/(.*)", headers: securityHeaders },
       {
+        source: "/ffmpeg/:path*",
+        headers: [
+          { key: "Cache-Control", value: "public, max-age=31536000, immutable" },
+        ],
+      },
+      {
         source: "/tools/:path*",
         headers: [
           { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
